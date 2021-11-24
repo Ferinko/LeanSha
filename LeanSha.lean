@@ -25,9 +25,9 @@ def prepare (msg : ByteArray) : Msg := do
   msg' := msg'.append lengthBigEndian
   ⟨msg'⟩
   where
-    padToBlockSizeMinusOne (msg : ByteArray) : ByteArray :=
-      ByteArray.append msg ⟨⟨
-        List.replicate (OctetsInBlock.toNat - OctetsInUInt64 - msg.size % OctetsInBlock.toNat) 0x00
+    padToBlockSizeMinusOne (arr : ByteArray) : ByteArray :=
+      ByteArray.append arr ⟨⟨
+        List.replicate ((OctetsInBlock.toNat - (msg.size + OctetsInUInt64 + 1) % OctetsInBlock.toNat) % (OctetsInBlock.toNat)) 0x00
       ⟩⟩
     lengthBigEndian : ByteArray :=
       let sz : UInt64 := UInt64.ofNat msg.size * BitsInByte
