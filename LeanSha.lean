@@ -17,7 +17,7 @@ structure Msg where data : ByteArray deriving Inhabited
 
 structure Block where data : ByteArray deriving Inhabited
 
-def prepare (msg : ByteArray) : Msg := do
+def prepare (msg : ByteArray) : Msg := Id.run do
   assert! msg.size ≤ 2^64 / BitsInByte.toNat
   let mut msg' := msg
   msg' := msg'.push 0b10000000
@@ -51,7 +51,7 @@ def blocks (msg : Msg) : Array Block :=
 
 def OctetsInUInt32 : Nat := 4
 
-def UInt32sOfBlock (block : Block) : Array UInt32 := do
+def UInt32sOfBlock (block : Block) : Array UInt32 := Id.run do
   let blockData : Array UInt8 := block.data.data
   let mut ui32 : UInt32 := 0
   let mut res : Array UInt32 := #[]
@@ -97,14 +97,14 @@ def bneg (n : UInt32) : UInt32 := n.xor 0xFFFFFFFF
 
 def sha1 (msg : ByteArray) : ByteArray :=
   let msgBlocks : Array Block := blocks ∘ prepare <| msg
-  do
+  Id.run do
     let mut st : ShaST := ShaST.mkInit
     for block in msgBlocks do
       let mut uInts : Array UInt32 := UInt32sOfBlock block
       for i in [NumIntegerPadBegin : NumIntegerPadEnd + 1] do
         uInts := uInts.push <| rotl (
-          uInts[i - 3] ^^^ uInts[i - 8] ^^^
-          uInts[i - 14] ^^^ uInts[i - 16]
+          uInts[i - 3]! ^^^ uInts[i - 8]! ^^^
+          uInts[i - 14]! ^^^ uInts[i - 16]!
         )
       let mut a : UInt32 := st.h₀
       let mut b : UInt32 := st.h₁
@@ -126,7 +126,7 @@ def sha1 (msg : ByteArray) : ByteArray :=
         else 
           f := b ^^^ c ^^^ d
           k := 0xCA62C1D6
-        let temp := (rotl a 5) + f + e + k + uInts[i]
+        let temp := (rotl a 5) + f + e + k + uInts[i]!
         e := d
         d := c
         c := rotl b 30

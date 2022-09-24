@@ -1,6 +1,7 @@
 import Lake
 open Lake DSL
 
-package LeanSha {
-  -- add configuration options here
-}
+package LeanSha
+
+@[defaultTarget]
+lean_lib LeanSha
