@@ -1,23 +1,23 @@
 namespace Sha
 
-def BitsInByte : UInt64 := 8
+private def BitsInByte : UInt64 := 8
 
-def h₀α : UInt32 := 0x67452301
-def h₁α : UInt32 := 0xEFCDAB89
-def h₂α : UInt32 := 0x98BADCFE
-def h₃α : UInt32 := 0x10325476
-def h₄α : UInt32 := 0xC3D2E1F0
+private def h₀α : UInt32 := 0x67452301
+private def h₁α : UInt32 := 0xEFCDAB89
+private def h₂α : UInt32 := 0x98BADCFE
+private def h₃α : UInt32 := 0x10325476
+private def h₄α : UInt32 := 0xC3D2E1F0
 
-def BlockSize : UInt32 := 512
-def OctetsInBlock : UInt32 := BlockSize / 8
+private def BlockSize : UInt32 := 512
+private def OctetsInBlock : UInt32 := BlockSize / 8
 
-def OctetsInUInt64 : Nat := 8
+private def OctetsInUInt64 : Nat := 8
 
-structure Msg where data : ByteArray deriving Inhabited
+private structure Msg where data : ByteArray deriving Inhabited
 
-structure Block where data : ByteArray deriving Inhabited
+private structure Block where data : ByteArray deriving Inhabited
 
-def prepare (msg : ByteArray) : Msg := Id.run do
+private def prepare (msg : ByteArray) : Msg := Id.run do
   assert! msg.size ≤ 2^64 / BitsInByte.toNat
   let mut msg' := msg
   msg' := msg'.push 0b10000000
@@ -42,16 +42,16 @@ def prepare (msg : ByteArray) : Msg := Id.run do
         (sz >>> (0 * BitsInByte))
       ].map (·.toUInt8)⟩
 
-def blocks (msg : Msg) : Array Block :=
+private def blocks (msg : Msg) : Array Block :=
   (·.1) <| msg.data.data.foldl (init := (#[], ByteArray.empty, 0))
     λ (res, stride, depth) octet =>
       if depth % OctetsInBlock = OctetsInBlock - 1
       then (res.push ⟨stride.push octet⟩, ⟨#[]⟩, depth + 1)
       else (res, stride.push octet, depth + 1)
 
-def OctetsInUInt32 : Nat := 4
+private def OctetsInUInt32 : Nat := 4
 
-def UInt32sOfBlock (block : Block) : Array UInt32 := Id.run do
+private def UInt32sOfBlock (block : Block) : Array UInt32 := Id.run do
   let blockData : Array UInt8 := block.data.data
   let mut ui32 : UInt32 := 0
   let mut res : Array UInt32 := #[]
@@ -63,7 +63,7 @@ def UInt32sOfBlock (block : Block) : Array UInt32 := Id.run do
     res := res.push ui32
   res
 
-def ByteArrayOfUInt32 (ui32 : UInt32) : ByteArray :=
+private def ByteArrayOfUInt32 (ui32 : UInt32) : ByteArray :=
   ⟨#[
     ui32 >>> (BitsInByte.toUInt32 * 3),
     ui32 >>> (BitsInByte.toUInt32 * 2),
@@ -71,14 +71,14 @@ def ByteArrayOfUInt32 (ui32 : UInt32) : ByteArray :=
     ui32 >>> (BitsInByte.toUInt32 * 0)
   ].map (·.toUInt8)⟩
 
-structure ShaST where
+private structure ShaST where
   h₀ : UInt32
   h₁ : UInt32
   h₂ : UInt32
   h₃ : UInt32
   h₄ : UInt32
 
-def ShaST.mkInit : ShaST := {
+private def ShaST.mkInit : ShaST := {
   h₀ := h₀α
   h₁ := h₁α
   h₂ := h₂α
@@ -86,14 +86,14 @@ def ShaST.mkInit : ShaST := {
   h₄ := h₄α
 }
 
-def NumIntegerPadBegin : Nat := 16
-def NumIntegerPadEnd : Nat := 79
+private def NumIntegerPadBegin : Nat := 16
+private def NumIntegerPadEnd : Nat := 79
 
-def rotl (n : UInt32) (k : Nat := 1) : UInt32 :=
+private def rotl (n : UInt32) (k : Nat := 1) : UInt32 :=
   assert! k ≤ 32
   n <<< k.toUInt32 ||| (n >>> (32 - k.toUInt32))
 
-def bneg (n : UInt32) : UInt32 := n.xor 0xFFFFFFFF
+private def bneg (n : UInt32) : UInt32 := n.xor 0xFFFFFFFF
 
 def sha1 (msg : ByteArray) : ByteArray :=
   let msgBlocks : Array Block := blocks ∘ prepare <| msg
